@@ -10,6 +10,81 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model admins {
+  id    String @id @default(uuid())
+  name  String @db.VarChar(32)
+  email String @unique @db.VarChar(64)
+  phone_number String @unique @db.VarChar(16)
+  password String @db.VarChar(16)
+  status Boolean @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime @updatedAt
+}
+
+model products {
+  id    String @id @default(uuid())
+  name  String @db.VarChar(64)
+  price Int
+  category String @db.VarChar(32)
+  stock Int
+  description String @db.VarChar(255)
+  image String @db.VarChar(255)
+  is_active Boolean @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime @updatedAt
+  order_items order_items[]
+}
+
+model orders {
+  id    String @id @default(uuid())
+  qty Int
+  total_price Int
+  status String @db.VarChar(32)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  order_items order_items[]
+  payment payments?
+  invoice invoices? @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  invoice_id  String?
+} 
+
+model order_items {
+  id    String @id @default(uuid())
+  order_id String 
+  order orders @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product_id String 
+  product products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  qty Int
+  price Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model payments {
+  id    String @id @default(uuid())
+  order_id String @unique
+  order orders @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  payment_method String @db.VarChar(32)
+  total_price Int
+  status String @db.VarChar(32)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime @updatedAt
+}
+
+model invoices {
+  id    String @id @default(uuid())
+  order_id String @unique
+  payments_id String 
+  status String @db.VarChar(32)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime @updatedAt
+  orders orders[]
 }
