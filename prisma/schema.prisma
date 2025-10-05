@@ -1,15 +1,85 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model products {
+  id          String        @id @default(uuid())
+  name        String        @db.VarChar(64)
+  price       Int
+  category    String        @db.VarChar(32)
+  stock       Int
+  description String        @db.VarChar(255)
+  image       String        @db.VarChar(255)
+  is_active   Boolean       @default(false)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime?
+  deleted_at  DateTime?
+  order_items order_items[]
+}
+
+model admins {
+  id           String   @id
+  name         String   @db.VarChar(32)
+  email        String   @unique @db.VarChar(64)
+  phone_number String   @unique @db.VarChar(16)
+  password     String   @db.VarChar(16)
+  status       Boolean  @default(true)
+  created_at   DateTime @default(now())
+  updated_at   DateTime?
+  deleted_at   DateTime?
+}
+
+model invoices {
+  id          String   @id
+  order_id    String   @unique
+  payments_id String
+  status      String   @db.VarChar(32)
+  created_at  DateTime @default(now())
+  updated_at  DateTime?
+  deleted_at  DateTime?
+  orders      orders[]
+}
+
+model order_items {
+  id         String   @id
+  order_id   String
+  product_id String
+  qty        Int
+  price      Int
+  created_at DateTime @default(now())
+  updated_at DateTime?
+  orders     orders   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  products   products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+}
+
+model orders {
+  id          String        @id
+  qty         Int
+  total_price Int
+  status      String        @db.VarChar(32)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime?
+  invoice_id  String?
+  order_items order_items[]
+  invoices    invoices?     @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  payments    payments?
+}
+
+model payments {
+  id             String   @id
+  order_id       String   @unique
+  payment_method String   @db.VarChar(32)
+  total_price    Int
+  status         String   @db.VarChar(32)
+  created_at     DateTime @default(now())
+  updated_at     DateTime?
+  deleted_at     DateTime?
+  orders         orders   @relation(fields: [order_id], references: [id], onDelete: Cascade)
 }
